@@ -1,0 +1,55 @@
+version: "3.5" #указываем версию
+services:      #расписыванием нащи сервисы
+  app:     #1 - сервис
+    build: . #на каком образе строим
+    container_name: app-test #название контейнера
+    ports:              #указываем порты
+      - '8080:8080'
+    # restart: unless-stopped #как будет происходить рестарт
+    depends_on:   #зависимости без которых не будет запускаться сервис
+      - app-db
+      - pgadmin
+    networks:    #в каких сетях работает
+      - appnet
+
+  app-db:
+    image: postgres
+    container_name: app-postgres-test #это имя для сервера
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "1065"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - postgres-data-test:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - appnet
+
+  pgadmin:
+    container_name: pgadmin-container-test
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "user@habr.com"
+      PGADMIN_DEFAULT_PASSWORD: "1065"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data-test:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:   #зависимости без которых не будет запускаться сервис
+      - app-db
+    restart: unless-stopped
+    networks:    #в каких сетях работает
+      - appnet
+
+volumes:
+  postgres-data-test:
+  pgadmin-data-test:
+
+networks:     #создаем сети
+  appnet:
+    name: appnet
+    driver: bridge
